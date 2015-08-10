@@ -1,15 +1,15 @@
 #!/usr/bin/env ruby
 
 require 'optparse'
+require 'ostruct'
 
-options = {}
+options = OpenStruct.new
 OptionParser.new do |opts|
-  opts.banner = "Usage: example.rb [options]"
+  opts.banner = "Usage: #{$0} [options]"
 
-  opts.on("-v", "Run verbosely") do |v|
-    options[:verbose] = v
+  opts.on("-f", "--file NAME", "File to convert") do |f|
+    options.file = f
   end
 end.parse!
 
-p options
-p ARGV
+p options.file
