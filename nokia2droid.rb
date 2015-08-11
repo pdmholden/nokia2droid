@@ -3,14 +3,23 @@
 require 'optparse'
 require 'ostruct'
 require 'nokogiri'
+require 'vcardigan'
 
-def forward_convert filename
-    src = File.open(filename)
-    doc = Nokogiri::XML(src)
-    # p doc.at_xpath("//c:Notes").children.to_s
-    p doc.at_xpath("//c:Number").children.to_s
-    p doc.at_xpath("//c:FamilyName").children.to_s
-    p doc.at_xpath("//c:GivenName").children.to_s
+def forward_convert in_filename
+  src = File.open(in_filename)
+  doc = Nokogiri::XML(src)
+  dst = VCardigan.create(:version => '4.0')
+
+  unless doc.at_xpath("//c:Notes").nil?
+    dst.note doc.at_xpath("//c:Notes").children.to_s
+  end
+  dst.tel doc.at_xpath("//c:Number").children.to_s, :type => 'CELL'
+  dst.name doc.at_xpath("//c:FamilyName").children.to_s,
+    doc.at_xpath("//c:GivenName").children.to_s
+  dst.fullname doc.at_xpath("//c:GivenName").children.to_s + doc.at_xpath("//c:FamilyName").children.to_s
+  # FN mandatory for vcard?
+
+  src.close
 end
 
 options = OpenStruct.new
