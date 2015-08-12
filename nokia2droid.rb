@@ -6,9 +6,18 @@ require 'nokogiri'
 require 'vcardigan'
 
 def forward_convert in_filename, dump=false
+  if File.directory? in_filename
+    return
+  end
+
   src = File.open(in_filename)
   doc = Nokogiri::XML(src)
   vcf = VCardigan.create(:version => '3.0')
+
+  unless doc.errors.empty?
+    p "#{in_filename} is not an XML file"
+    return
+  end
 
   unless doc.at_xpath("//c:Notes").nil?
     vcf.note doc.at_xpath("//c:Notes").children.to_s
@@ -51,7 +60,7 @@ end.parse!
 
 if File.directory? options.filename
   Dir.foreach options.filename do |file|
-    puts options.filename + File::SEPARATOR + file
+    forward_convert options.filename + File::SEPARATOR + file, options.dump
   end
 else
   forward_convert options.filename, options.dump
