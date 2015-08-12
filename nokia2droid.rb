@@ -5,7 +5,7 @@ require 'ostruct'
 require 'nokogiri'
 require 'vcardigan'
 
-def forward_convert in_filename, dump=false
+def forward_convert in_filename, options
   if File.directory? in_filename
     return
   end
@@ -14,11 +14,14 @@ def forward_convert in_filename, dump=false
   doc = Nokogiri::XML(src)
   vcf = VCardigan.create(:version => '3.0')
 
+  # graceful exit when parsing non-XML; there is potential for false positives
+  # here
   unless doc.errors.empty?
     p "#{in_filename} is not an XML file"
     return
   end
 
+  # not all contacts have Notes field
   unless doc.at_xpath("//c:Notes").nil?
     vcf.note doc.at_xpath("//c:Notes").children.to_s
   end
@@ -31,13 +34,17 @@ def forward_convert in_filename, dump=false
     doc.at_xpath("//c:GivenName").children.to_s
   # FN mandatory for vcard?
 
-  if dump
+  if options.dump
     print "Surname: ", doc.at_xpath("//c:FamilyName").children.to_s, "\n"
     print "Name: ", doc.at_xpath("//c:GivenName").children.to_s, "\n"
     print "Number: ", doc.at_xpath("//c:Number").children.to_s, "\n\n"
   end
 
-  # puts vcf
+  if options.vcard
+    puts vcf.to_s
+  end
+
+  # output the VCARD to a file
   out_filename = File.dirname(in_filename) + File::SEPARATOR +
     File.basename(in_filename, ".*") + ".vcf"
   File.open(out_filename, "w") do |dst|
@@ -56,12 +63,18 @@ OptionParser.new do |opts|
   opts.on("-d", "--dump", "Show the contact data on stdout") do |x|
     options.dump = x
   end
+  opts.on "-v", "--vcard", "Show raw vcard on stdout" do |v|
+    options.vcard = v
+  end
 end.parse!
 
 if File.directory? options.filename
+  # even though options.filename is the absolute path, when using Dir.foreach,
+  # it seems that the actual directory name is dropped, so have to put it back
+  # together here
   Dir.foreach options.filename do |file|
-    forward_convert options.filename + File::SEPARATOR + file, options.dump
+    forward_convert options.filename + File::SEPARATOR + file, options
   end
 else
-  forward_convert options.filename, options.dump
+  forward_convert options.filename, options
 end
