@@ -5,8 +5,8 @@ require 'ostruct'
 require 'nokogiri'
 require 'vcardigan'
 
-def forward_convert options
-  src = File.open(options.filename)
+def forward_convert in_filename, dump=false
+  src = File.open(in_filename)
   doc = Nokogiri::XML(src)
   vcf = VCardigan.create(:version => '3.0')
 
@@ -22,15 +22,15 @@ def forward_convert options
     doc.at_xpath("//c:GivenName").children.to_s
   # FN mandatory for vcard?
 
-  if options.dump
+  if dump
     print "Surname: ", doc.at_xpath("//c:FamilyName").children.to_s, "\n"
     print "Name: ", doc.at_xpath("//c:GivenName").children.to_s, "\n"
     print "Number: ", doc.at_xpath("//c:Number").children.to_s, "\n\n"
   end
 
   # puts vcf
-  out_filename = File.dirname(options.filename) + File::SEPARATOR +
-    File.basename(options.filename, ".*") + ".vcf"
+  out_filename = File.dirname(in_filename) + File::SEPARATOR +
+    File.basename(in_filename, ".*") + ".vcf"
   File.open(out_filename, "w") do |dst|
     dst.write(vcf)
   end
@@ -49,4 +49,10 @@ OptionParser.new do |opts|
   end
 end.parse!
 
-forward_convert options
+if File.directory? options.filename
+  Dir.foreach options.filename do |file|
+    puts options.filename + File::SEPARATOR + file
+  end
+else
+  forward_convert options.filename, options.dump
+end
