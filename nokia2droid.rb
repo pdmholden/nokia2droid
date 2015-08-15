@@ -57,10 +57,10 @@ options = OpenStruct.new
 OptionParser.new do |opts|
   opts.banner = "Usage: #{$0} [options]"
 
-  opts.on("-f", "--file NAME", "File to convert") do |f|
+  opts.on("-f", "--file NAME", "File/directory to convert") do |f|
     options.filename = File.absolute_path(f)
   end
-  opts.on("-d", "--dump", "Show the contact data on stdout") do |x|
+  opts.on("-d", "--dump", "Show the contact information on stdout") do |x|
     options.dump = x
   end
   opts.on "-v", "--vcard", "Show raw vcard on stdout" do |v|
